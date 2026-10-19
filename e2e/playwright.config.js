@@ -6,7 +6,7 @@ export default defineConfig({
     fullyParallel: false,
     workers: 1,
     reporter: [['list'], ['html', { open: 'never' }]],
-    use: { baseURL: 'http://127.0.0.1:8080', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+    use: { baseURL: 'http://127.0.0.1:8080', actionTimeout: 15_000, trace: 'retain-on-failure', screenshot: 'only-on-failure' },
     webServer: {
         command: 'java -jar ../target/payara-micro.jar --deploy ../target/websocket-lab.war --contextroot / --port 8080 --nocluster',
         url: 'http://127.0.0.1:8080/api/health',

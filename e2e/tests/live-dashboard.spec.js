@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 async function signIn(page, username) {
     await page.goto('/login.xhtml');
-    await page.getByLabel('Username', { exact: true }).fill(username);
-    await page.getByLabel('Password', { exact: true }).fill(process.env.DEMO_PASSWORD || 'Demo123!');
+    await page.getByLabel(/^Username/).fill(username);
+    await page.getByLabel(/^Password/).fill(process.env.DEMO_PASSWORD || 'Demo123!');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/dashboard.xhtml/);
     await expect(page.locator('#connection-status')).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
@@ -58,8 +58,8 @@ test('login, shared push, user-specific push, offline recovery and logout', asyn
 
 test('invalid credentials cannot enter the protected dashboard', async ({ page }) => {
     await page.goto('/login.xhtml');
-    await page.getByLabel('Username', { exact: true }).fill('alice');
-    await page.getByLabel('Password', { exact: true }).fill('incorrect-password');
+    await page.getByLabel(/^Username/).fill('alice');
+    await page.getByLabel(/^Password/).fill('incorrect-password');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(page).not.toHaveURL(/\/app\/dashboard.xhtml/);
     await expect(page.getByText('Sign-in failed', { exact: true })).toBeVisible();
