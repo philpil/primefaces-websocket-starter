@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>dev.philhendry</groupId>
+    <artifactId>primefaces-websocket-starter</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+    <name>PrimeFaces WebSocket Lab</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>25</maven.compiler.release>
+        <primefaces.version>16.0.1</primefaces.version>
+        <jakartaee.version>11.0.0</jakartaee.version>
+        <payara.version>7.2026.10</payara.version>
+        <junit.version>6.1.3</junit.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId><artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>${jakartaee.version}</version><scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.primefaces</groupId><artifactId>primefaces</artifactId>
+            <version>${primefaces.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version><scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <finalName>websocket-lab</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+                <version>3.16.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-war-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId>
+                <version>3.6.0</version><configuration><useModulePath>false</useModulePath></configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId>
+                <version>3.11.0</version>
+                <executions><execution>
+                    <id>download-server</id><phase>package</phase><goals><goal>copy</goal></goals>
+                    <configuration><artifactItems><artifactItem>
+                        <groupId>fish.payara.extras</groupId><artifactId>payara-micro</artifactId>
+                        <version>${payara.version}</version><type>jar</type>
+                        <outputDirectory>${project.build.directory}</outputDirectory>
+                        <destFileName>payara-micro.jar</destFileName>
+                    </artifactItem></artifactItems></configuration>
+                </execution></executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

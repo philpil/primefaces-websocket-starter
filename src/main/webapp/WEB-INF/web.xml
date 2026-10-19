@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_1.xsd" version="6.1">
+    <display-name>PrimeFaces WebSocket Lab</display-name>
+    <context-param><param-name>jakarta.faces.PROJECT_STAGE</param-name><param-value>Production</param-value></context-param>
+    <context-param><param-name>jakarta.faces.ENABLE_WEBSOCKET_ENDPOINT</param-name><param-value>true</param-value></context-param>
+    <context-param><param-name>primefaces.THEME</param-name><param-value>saga-blue</param-value></context-param>
+    <servlet><servlet-name>Faces Servlet</servlet-name><servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class><load-on-startup>1</load-on-startup></servlet>
+    <servlet-mapping><servlet-name>Faces Servlet</servlet-name><url-pattern>*.xhtml</url-pattern></servlet-mapping>
+    <session-config><session-timeout>30</session-timeout><cookie-config><http-only>true</http-only></cookie-config><tracking-mode>COOKIE</tracking-mode></session-config>
+    <welcome-file-list><welcome-file>login.xhtml</welcome-file></welcome-file-list>
+    <!-- Protect the WebSocket handshake as well as the dashboard page. -->
+    <security-constraint>
+        <web-resource-collection><web-resource-name>Signed-in users</web-resource-name><url-pattern>/app/*</url-pattern><url-pattern>/jakarta.faces.push/*</url-pattern></web-resource-collection>
+        <auth-constraint><role-name>USER</role-name></auth-constraint>
+    </security-constraint>
+    <security-role><role-name>USER</role-name></security-role>
+    <security-role><role-name>ADMIN</role-name></security-role>
+</web-app>

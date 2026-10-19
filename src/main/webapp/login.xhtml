@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html"
+      xmlns:p="primefaces" xmlns:f="jakarta.faces.core">
+<h:head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Sign in · WebSocket Lab</title>
+    <h:outputStylesheet library="app" name="lab.css"/>
+</h:head>
+<h:body styleClass="login-body">
+    <main class="login-layout">
+        <section class="login-story">
+            <a class="wordmark" href="#{request.contextPath}/login.xhtml"><span class="brand-mark">W</span> WebSocket Lab</a>
+            <div class="eyebrow">PRIMEFACES / JAKARTA EE</div>
+            <h1>Your backend moves.<br/>Your dashboard follows.</h1>
+            <p>A working reference for pushing changes from a Java service into a PrimeFaces dashboard.</p>
+            <div class="story-points"><span>Live telemetry</span><span>Private notifications</span><span>Automatic reconnect</span></div>
+            <div class="signal-preview" aria-hidden="true"><span/><span/><span/><span/><span/><span/><span/><span/><span/><span/><span/><span/></div>
+            <small>Real WebSockets. No dashboard polling.</small>
+        </section>
+        <section class="login-card">
+            <div class="eyebrow">WELCOME TO THE LAB</div>
+            <h2>Sign in</h2><p class="muted">Open two browsers to see updates arrive together.</p>
+            <h:form id="loginForm">
+                <p:messages id="messages" showDetail="true" closable="true"/>
+                <div class="field"><p:outputLabel for="username" value="Username"/>
+                    <p:inputText id="username" value="#{loginBean.username}" required="true" autocomplete="username"/></div>
+                <div class="field"><p:outputLabel for="password" value="Password"/>
+                    <p:password id="password" value="#{loginBean.password}" required="true" feedback="false" toggleMask="true" autocomplete="current-password"/></div>
+                <p:commandButton id="signIn" value="Sign in" action="#{loginBean.login}" ajax="false" styleClass="wide-button"/>
+            </h:form>
+            <div class="demo-box"><strong>Demo accounts</strong><dl><dt>alice</dt><dd>Administrator</dd><dt>bob</dt><dd>Viewer</dd></dl><p>Default password: <code>Demo123!</code></p><small>Set DEMO_PASSWORD to use your own password for both accounts.</small></div>
+        </section>
+    </main>
+</h:body>
+</html>

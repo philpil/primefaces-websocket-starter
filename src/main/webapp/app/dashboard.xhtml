@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets" xmlns:p="primefaces">
+<h:head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Dashboard · WebSocket Lab</title>
+    <h:outputStylesheet library="app" name="lab.css"/>
+    <h:outputScript library="app" name="dashboard.js" target="head"/>
+</h:head>
+<h:body>
+    <aside class="sidebar">
+        <a class="wordmark" href="dashboard.xhtml"><span class="brand-mark">W</span> WebSocket Lab</a>
+        <div class="nav-label">WORKSPACE</div>
+        <nav aria-label="Dashboard sections"><a class="active" href="#overview">Overview</a><a href="#nodes-section">Network nodes</a><a href="#examples">Push examples</a><a href="#activity-section">Activity stream</a></nav>
+        <div class="sidebar-note"><span class="pulse-dot"/> Backend → CDI event → WebSocket → PrimeFaces</div>
+    </aside>
+    <div class="workspace">
+        <header class="topbar"><span class="breadcrumb">Workspace <span>/</span> Live dashboard</span>
+            <div class="account"><span class="avatar">#{request.remoteUser.substring(0,1).toUpperCase()}</span><strong>#{request.remoteUser}</strong>
+                <h:form id="accountForm"><p:commandButton id="logout" value="Sign out" action="#{loginBean.logout}" ajax="false" styleClass="ui-button-outlined ui-button-secondary"/></h:form></div>
+        </header>
+        <main class="dashboard" id="overview">
+            <div class="page-title"><div><div class="eyebrow">BACKEND DATA, LIVE</div><h1>Network overview</h1><p class="muted">Changes arrive through WebSockets, then PrimeFaces refreshes the data that changed.</p></div>
+                <div id="connection-status" class="connection-status" role="status" aria-live="polite" data-state="connecting"><span class="pulse-dot"/><span id="connection-text">Connecting…</span></div></div>
+            <div id="connection-warning" class="connection-warning" role="alert" hidden="hidden">Live updates are unavailable. Reconnect the socket or refresh this page.</div>
+            <h:form id="board">
+                <p:messages id="messages" showDetail="true" closable="true"/>
+                <p:remoteCommand name="refreshDashboard" action="#{dashboardBean.refresh}" process="@this"
+                                 update="metrics nodes activity simulator notifications" onstart="LiveLab.beginRefresh()"
+                                 oncomplete="LiveLab.endRefresh()" onerror="LiveLab.refreshFailed()"/>
+                <p:outputPanel id="metrics" layout="block" styleClass="metrics-grid">
+                    <article class="metric-card"><span>Online nodes</span><strong>#{dashboardBean.onlineCount}<small> / 6</small></strong><div class="metric-note">Current backend snapshot</div></article>
+                    <article class="metric-card"><span>Average load</span><strong>#{dashboardBean.averageLoad}<small>%</small></strong><div class="metric-note">Across all network nodes</div></article>
+                    <article class="metric-card"><span>Data version</span><strong data-testid="data-version">#{dashboardBean.version}</strong><div class="metric-note">Increases with each update</div></article>
+                    <article class="metric-card"><span>Last backend update</span><strong class="time-value">#{dashboardBean.lastUpdated}</strong><div class="metric-note">No page reload required</div></article>
+                </p:outputPanel>
+                <section class="panel" id="nodes-section"><div class="panel-header"><div><h2>Network nodes</h2><p>Shared state: every signed-in dashboard receives the same change signal.</p></div><span class="label-chip">BROADCAST CHANNEL</span></div>
+                    <p:dataTable id="nodes" value="#{dashboardBean.nodes}" var="node" rowKey="#{node.id}" styleClass="nodes-table" emptyMessage="No nodes available.">
+                        <p:column headerText="Node"><strong>#{node.name}</strong><small class="node-id">#{node.id}</small></p:column>
+                        <p:column headerText="Status"><p:tag value="#{node.status}" severity="#{node.getSeverity()}"/></p:column>
+                        <p:column headerText="Load"><div class="load-row"><span class="load-track"><span style="width: #{node.load}%"/></span><h:outputText value="#{node.load}"><f:convertNumber maxFractionDigits="0"/></h:outputText><span>%</span></div></p:column>
+                        <p:column headerText="Updates" styleClass="number-column">#{node.updates}</p:column>
+                    </p:dataTable>
+                </section>
+                <div class="content-grid" id="examples">
+                    <section class="panel"><div class="panel-header"><div><h2>Try the push examples</h2><p>Normal HTTP actions update the backend. WebSockets notify the other tabs.</p></div></div>
+                        <p:outputPanel id="simulator" layout="block" styleClass="example-body">
+                            <div class="example-number">01 / SHARED TELEMETRY</div>
+                            <h3>Backend simulator <span class="small-status">#{dashboardBean.simulatorRunning ? 'Running' : 'Paused'}</span></h3>
+                            <p>The server changes one node every three seconds. There is no client polling timer.</p>
+                            <h:panelGroup rendered="#{request.isUserInRole('ADMIN')}" layout="block" styleClass="button-row">
+                                <p:commandButton value="#{dashboardBean.simulatorRunning ? 'Pause simulator' : 'Start simulator'}" action="#{dashboardBean.toggleSimulator}" process="@this" update="simulator" styleClass="ui-button-outlined"/>
+                                <p:commandButton value="Send one update" action="#{dashboardBean.triggerUpdate}" process="@this" update="metrics nodes activity"/>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{not request.isUserInRole('ADMIN')}"><p class="role-note">Signed in as a viewer. Alice can control the simulator.</p></h:panelGroup>
+                        </p:outputPanel>
+                        <div class="example-body divided"><div class="example-number">02 / USER-SPECIFIC PUSH</div><h3>A notification just for you</h3><p>Alice's private channel is separate from Bob's. Other tabs signed in as you also receive it.</p>
+                            <p:commandButton id="notifyMe" value="Send me a notification" action="#{dashboardBean.notifyMe}" process="@this" update="notifications" styleClass="ui-button-outlined"/>
+                            <p:outputPanel id="notifications" layout="block" styleClass="notification-list">
+                                <h:panelGroup rendered="#{empty dashboardBean.notifications}"><p class="muted">No private notifications yet.</p></h:panelGroup>
+                                <ui:repeat value="#{dashboardBean.notifications}" var="notification"><div class="notification-item"><h:outputText value="#{notification}"/></div></ui:repeat>
+                            </p:outputPanel>
+                        </div>
+                        <div class="example-body divided"><div class="example-number">03 / EXTERNAL SYSTEM</div><h3>Bring your own backend</h3><p>POST telemetry to <code>/api/ingest</code> using the configured ingestion key. The same service and WebSocket flow updates this page.</p><small>See the README for a ready-to-use curl example.</small></div>
+                    </section>
+                    <section class="panel" id="activity-section"><div class="panel-header"><div><h2>Activity stream</h2><p>The latest 30 backend changes.</p></div></div>
+                        <p:outputPanel id="activity" layout="block" styleClass="activity-list"><ui:repeat value="#{dashboardBean.activity}" var="event"><div class="activity-item"><span class="activity-marker"/><div><h:outputText value="#{event.message}"/><small>#{event.getTime()} UTC · event #{event.sequence}</small></div></div></ui:repeat></p:outputPanel>
+                    </section>
+                </div>
+                <h:panelGroup rendered="#{request.isUserInRole('ADMIN')}" layout="block" styleClass="panel edit-panel"><div class="panel-header"><div><h2>Change a node</h2><p>Bean → controller → service → repository, then an event signals every dashboard.</p></div><span class="label-chip">ADMINISTRATOR</span></div>
+                    <div class="edit-fields"><div class="field"><p:outputLabel for="editedNode" value="Node"/><p:selectOneMenu id="editedNode" value="#{dashboardBean.editedNodeId}"><f:selectItems value="#{dashboardBean.nodes}" var="option" itemLabel="#{option.name}" itemValue="#{option.id}"/></p:selectOneMenu></div>
+                        <div class="field"><p:outputLabel for="editedLoad" value="Load (%)"/><p:inputNumber id="editedLoad" value="#{dashboardBean.editedLoad}" minValue="0" maxValue="100" decimalPlaces="0"/></div>
+                        <div class="field"><p:outputLabel for="editedStatus" value="Status"/><p:selectOneMenu id="editedStatus" value="#{dashboardBean.editedStatus}"><f:selectItem itemLabel="Online" itemValue="ONLINE"/><f:selectItem itemLabel="Degraded" itemValue="DEGRADED"/><f:selectItem itemLabel="Offline" itemValue="OFFLINE"/></p:selectOneMenu></div>
+                        <p:commandButton value="Apply change" action="#{dashboardBean.saveNode}" process="@this editedNode editedLoad editedStatus" update="metrics nodes activity messages"/>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+            <footer class="page-footer">PrimeFaces WebSocket Lab <span>Jakarta Faces push · CDI events · no polling</span></footer>
+        </main>
+    </div>
+    <f:websocket id="dashboardSocket" channel="dashboard" user="#{pushSession.id}" onopen="LiveLab.onOpen" onmessage="LiveLab.onDashboardMessage" onclose="LiveLab.onClose" onerror="LiveLab.onError"/>
+    <f:websocket id="personalSocket" channel="personal" user="#{request.remoteUser}" onopen="LiveLab.onOpen" onmessage="LiveLab.onPersonalMessage" onclose="LiveLab.onClose" onerror="LiveLab.onError"/>
+</h:body>
+</html>
