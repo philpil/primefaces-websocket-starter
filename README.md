@@ -103,6 +103,8 @@ There are two session-scoped channels. Dashboard recipients use opaque session I
 
 Faces' browser `onopen` callback is only called for the initial successful connection. The server observes `@WebsocketEvent.Opened` and sends `channel-ready` for every new physical connection; that is why reconnects also refresh the snapshot. This avoids relying on a callback that does not fire again.
 
+The ready handshake is dispatched on the container-managed scheduler after the endpoint's opening callback returns. A bounded retry handles a transport that is not yet open; this is connection setup, not recurring data polling.
+
 Do not access `FacesContext`, `PrimeFaces.current()` or a view-scoped bean from a background thread. The backend updates shared state and emits an event; a normal Faces request updates the view.
 
 To plug in your application, replace the contents of `TelemetryRepository` with your service API/cache adapter and call `TelemetryService.update(...)` from your existing inbound listener. Keep the event publication after the authoritative state has been updated. For large tables, add a section/key to the invalidation and refresh only that section; keep full initial reads and reconnect recovery available over HTTP.

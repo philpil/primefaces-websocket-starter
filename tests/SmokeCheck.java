@@ -56,7 +56,7 @@ public class SmokeCheck {
             WebSocket privateSocket = alice.connect(alicePage, "personal", alicePersonal);
             WebSocket bobPrivateSocket = bob.connect(bobPage, "personal", bobPersonal);
             check(aliceDashboard.await("channel-ready", 10), "Initial dashboard ready handshake must arrive.");
-            check(bobDashboard.await("channel-ready", 10), "Bob dashboard handshake must arrive.");
+            check(bobDashboard.await("channel-ready", 10), "Bob dashboard handshake must arrive. Received: " + bobDashboard.history);
             check(alicePersonal.await("channel-ready", 10), "Alice private handshake must arrive.");
             check(bobPersonal.await("channel-ready", 10), "Bob private handshake must arrive.");
             System.out.println("PASS: All four authenticated WebSocket connections receive ready messages.");
@@ -178,13 +178,18 @@ public class SmokeCheck {
 
     static class Inbox implements WebSocket.Listener {
         final LinkedBlockingQueue<String> messages = new LinkedBlockingQueue<>();
+        final java.util.concurrent.ConcurrentLinkedQueue<String> history = new java.util.concurrent.ConcurrentLinkedQueue<>();
         final StringBuilder fragments = new StringBuilder();
         @Override public void onOpen(WebSocket socket) { socket.request(1); }
         @Override public CompletionStage<?> onText(WebSocket socket, CharSequence data, boolean last) {
             fragments.append(data);
-            if (last) { messages.offer(fragments.toString()); fragments.setLength(0); }
+            if (last) { String message = fragments.toString(); history.add(message); messages.offer(message); fragments.setLength(0); }
             socket.request(1); return null;
         }
+        @Override public CompletionStage<?> onClose(WebSocket socket, int code, String reason) {
+            history.add("closed: " + code + " " + reason); return null;
+        }
+        @Override public void onError(WebSocket socket, Throwable failure) { history.add("error: " + failure); }
         boolean await(String type, int seconds) throws InterruptedException {
             long deadline = System.nanoTime() + Duration.ofSeconds(seconds).toNanos();
             while (System.nanoTime() < deadline) {
